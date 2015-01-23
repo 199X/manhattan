@@ -37,9 +37,10 @@ int main(int argc, char** argv) {
 
       Uint32 t = 0;
 
-      while (running) {
-        ticks = SDL_GetTicks();
+      Uint32 accumulator = 0;
+      Uint32 timestep = 50;
 
+      while (running) {
         while (SDL_PollEvent(&e) != 0) {
           if (e.type == SDL_QUIT) {
             running = false;
@@ -50,9 +51,18 @@ int main(int argc, char** argv) {
           }
         }
 
+        Uint32 current_ticks = SDL_GetTicks();
+        accumulator += current_ticks - ticks;
+        ticks = current_ticks;
+
+        while (accumulator > timestep) {
+          t += 2;
+          accumulator -= timestep;
+        }
+
         SDL_Rect rect;
-        rect.x = ++++t;
-        rect.y = t;
+        rect.x = t + (2 * accumulator) / timestep;
+        rect.y = t + (2 * accumulator) / timestep;
         rect.w = 100;
         rect.h = 100;
 
@@ -64,20 +74,11 @@ int main(int argc, char** argv) {
         SDL_UpdateWindowSurface(window);
 
         Uint32 elapsed_ticks = SDL_GetTicks() - ticks;
-        Uint32 ticks_to_sleep = target_ticks - elapsed_ticks;
-
-        ticks = SDL_GetTicks();
-        int tick_delta;
-
+        int ticks_to_sleep = target_ticks - elapsed_ticks;
+        
         if (ticks_to_sleep > 0) {
           SDL_Delay(ticks_to_sleep);
-          Uint32 slept_ticks = SDL_GetTicks() - ticks;
-          tick_delta = slept_ticks - ticks_to_sleep;
-        } else {
-          tick_delta = -static_cast<int>(ticks_to_sleep);
         }
-
-        target_ticks = mspf - tick_delta;
       }
     }
   }
